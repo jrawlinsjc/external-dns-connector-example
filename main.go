@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"http"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"encoding/gob"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,6 +38,7 @@ func startServerToServeTargets(endpoints []*endpoint.Endpoint) net.Listener {
 func handleSigterm(cancel func()) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM)
+	signal.Notify(signals, syscall.SIGINT)
 	<-signals
 	fmt.Println("Received SIGTERM. Terminating...")
 	cancel()
@@ -52,14 +52,14 @@ func serveMetrics(address string) {
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	log.Fatal(http.ListenAndServe(address, nil))
+	fmt.Println(http.ListenAndServe(address, nil).Error())
 }
 
 func main() {
 
-	_, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	go handleSigterm(cancel)
-	go serveMetrics("127.0.0.:9099")
+	go serveMetrics("0.0.0.0:9099")
 
 	startServerToServeTargets(
 		[]*endpoint.Endpoint{
@@ -72,7 +72,9 @@ func main() {
 		},
 	)
 
-	for {
-		time.Sleep(time.Second)
+	select {
+	case <-ctx.Done():
+		fmt.Println("cancelled")
+		return
 	}
 }
