@@ -30,8 +30,8 @@ func startServerToServeTargets(endpoints []*endpoint.Endpoint, cancel func()) ne
 			}
 			enc := gob.NewEncoder(conn)
 			enc.Encode(endpoints)
-			ln.Close()
 			fmt.Println("Ahhh, another happy customer!")
+			conn.Close()
 		}
 	}()
 	fmt.Printf("Server listening on %s\n", ln.Addr().String())
