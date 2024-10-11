@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/external-dns/endpoint"
 )
 
-func startServerToServeTargets(endpoints []*endpoint.Endpoint) net.Listener {
+func startServerToServeTargets(endpoints []*endpoint.Endpoint, cancel func()) net.Listener {
 	ln, err := net.Listen("tcp", "0.0.0.0:9090")
 	if err != nil {
 		fmt.Println("Error listening on ", ln.Addr().String(), ": ", err.Error())
@@ -30,6 +30,7 @@ func startServerToServeTargets(endpoints []*endpoint.Endpoint) net.Listener {
 		enc := gob.NewEncoder(conn)
 		enc.Encode(endpoints)
 		ln.Close()
+		cancel()
 	}()
 	fmt.Printf("Server listening on %s\n", ln.Addr().String())
 	return ln
@@ -70,11 +71,12 @@ func main() {
 				RecordTTL:  180,
 			},
 		},
+		cancel,
 	)
 
 	select {
 	case <-ctx.Done():
-		fmt.Println("cancelled")
+		fmt.Println("exiting")
 		return
 	}
 }
