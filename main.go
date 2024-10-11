@@ -22,15 +22,17 @@ func startServerToServeTargets(endpoints []*endpoint.Endpoint, cancel func()) ne
 	}
 
 	go func() {
-		conn, err := ln.Accept()
-		if err != nil {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				ln.Close()
+				return
+			}
+			enc := gob.NewEncoder(conn)
+			enc.Encode(endpoints)
 			ln.Close()
-			return
+			cancel()
 		}
-		enc := gob.NewEncoder(conn)
-		enc.Encode(endpoints)
-		ln.Close()
-		cancel()
 	}()
 	fmt.Printf("Server listening on %s\n", ln.Addr().String())
 	return ln
