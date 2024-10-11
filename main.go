@@ -15,7 +15,7 @@ import (
 )
 
 func startServerToServeTargets(endpoints []*endpoint.Endpoint) net.Listener {
-	ln, err := net.Listen("tcp", "localhost:0")
+	ln, err := net.Listen("tcp", "0.0.0.0:9090")
 	if err != nil {
 		fmt.Println("Error listening on ", ln.Addr().String(), ": ", err.Error())
 		os.Exit(1)
